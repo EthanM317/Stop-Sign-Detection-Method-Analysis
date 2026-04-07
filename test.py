@@ -10,7 +10,7 @@ import template_matching
 
         
 def main():
-    util.detect_all('data/images', 'TEMPLATE_MATCHING')
+    util.detect_all('data/images', 'COLOUR_MATCHING')
     
 if __name__ == '__main__':
     main()

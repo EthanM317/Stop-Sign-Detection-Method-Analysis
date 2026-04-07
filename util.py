@@ -5,8 +5,8 @@ import os
 import xml.etree.ElementTree as ET
 import time
 from pathlib import Path
-import util
 import template_matching
+import colour_based
 
 #Parses xml file
 def parse_xml(xml_path):
@@ -82,10 +82,18 @@ def detect_all(folder_path, flag):
             continue
         
         # Detect stop sign
+        #Use flags to determine which method to use
+        detected = None
         if flag == 'TEMPLATE_MATCHING':
             bbox = template_matching.find_stop_sign(T, I)
+            
+        elif flag == 'COLOUR_MATCHING':
+            bbox = colour_based.find_stop_sign(I) 
+            
+        if bbox is None:
+            detected = False
+        else:
             detected = not (bbox[0] == 0 and bbox[1] == 0 and bbox[2] == 1 and bbox[3] == 1)
-        
         # Get ground truth
         xml_file = str(png_file).replace('.png', '.xml').replace('images', 'annotations')
         has_stop = has_stop_sign(xml_file)

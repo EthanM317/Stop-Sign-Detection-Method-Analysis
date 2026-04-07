@@ -6,74 +6,44 @@ from pathlib import Path
 import time
 
 
-def detect_all(folder_path):
-    #get images
-    images = sorted(Path(folder_path))
+def find_stop_sign(image):
+    """
+    Given an image I, returns the bounding box 
+    for the detected stop sign using colour detection with image pyramids.
+    """
+    #hsv allows us to ignore saturation & brightness so we can focus on hue
+    I = cv.cvtColor(image, cv.COLOR_BGR2HSV)
     
-    if len(images) == 0:
-        print(f"No images found in {folder_path}")
-        return
+    #storing red hsv values for comparison
+    #red exists at start and end of scale since hue is circular, so we need 2 ranges
+    lower_red1 = np.array([0,120,70])
+    upper_red1 = np.array([10,255,255])
+
+    lower_red2 = np.array([170,120,70])
+    upper_red2 = np.array([180,255,255])
     
-    #values to track
-    total_images = 0
-    false_positives = 0
-    false_negatives = 0
-    true_positives = 0
-    true_negatives = 0
+    #masks are a binary filter that will state for every pixel in I if it falls into the red range
+    mask1 = cv.inRange(I, lower_red1, upper_red1)
+    mask2 = cv.inRange(I, lower_red2, upper_red2)
+    mask = mask1 + mask2
     
-    #also want to track time to complete
-    start_time = time.time()
+    #remove noise
+    '''
+    Morphology eliminates noise in the overall structure. It works similar to applying
+    a gaussian filter to get rid of noise. The difference is, a guassian filter would
+    blur our masked image, turning the discrete values into continuous values.
+    Morphology avoids this by simply eliminating noisy pixels in the structure and
+    keeping all the values discrete.
+    '''
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     
-    print(f"{'Filename':<20}\t{'Stop Sign Detected':<20}\t{'Ground Truth':<15}")
-    print("-" * 60)
+    for contour in contours:
+        area = cv.contourArea(contour)
+        #ignore small noise
+        if area > 500:
+            x,y,w,h = cv.boundingRect(contour)
+            return np.array([y, x, h, w]).astype(int)
     
-    #perform detection on each image
-    for image in images:
-        total_images += 1
-        
-        I = cv.imread(str(image))
-        if I is None:
-            print(f"Error loading {image}")
-            continue
-        
-        #detect stop sign
-        bbox = find_stop_sign(I)
-        detected = not (bbox[0] == 0 and bbox[1] == 0 and bbox[2] == 1 and bbox[3] == 1)
-        
-        #get ground truth
-        # Get ground truth
-        xml_file = str(png_file).replace('.png', '.xml').replace('images', 'annotations')
-        has_stop = has_stop_sign(xml_file)
-        
-        if detected and has_stop:
-            true_positives += 1
-        elif detected and not has_stop:
-            false_positives += 1
-        elif not detected and has_stop:
-            false_negatives += 1
-        else:
-            true_negatives += 1
-        
-        detected_str = "Yes" if detected else "No"
-        ground_truth_str = "Yes" if has_stop else "No"
-        print(f"{png_file.name:<20}\t{detected_str:<20}\t{ground_truth_str:<15}")
-    
-    end_time = time.time()
-    total_time_ms = (end_time - start_time) * 1000
-    
-    # Print summary
-    print("\n" + "=" * 60)
-    print("SUMMARY")
-    print("=" * 60)
-    print(f"Total images processed: {total_images}")
-    print(f"True positives: {true_positives}")
-    print(f"True negatives: {true_negatives}")
-    print(f"False positives: {false_positives}")
-    print(f"False negatives: {false_negatives}")
-    print(f"Total time taken: {total_time_ms:.2f} milliseconds")
-    print(f"Average time per image: {total_time_ms/total_images:.2f} milliseconds")
-    
-    # Calculate accuracy
-    if total_images > 0:
-        accuracy = (true_positives + true_negatives) / total_images * 100
-        print(f"Accuracy: {accuracy:.2f}%")
