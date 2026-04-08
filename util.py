@@ -84,10 +84,11 @@ def detect_all(folder_path, flag):
         # Detect stop sign
         #Use flags to determine which method to use
         detected = None
-        if flag == 'TEMPLATE_MATCHING':
+        bbox = None
+        if flag == 'TEMPLATE_MATCH':
             bbox = template_matching.find_stop_sign(T, I)
             
-        elif flag == 'COLOUR_MATCHING':
+        elif flag == 'COLOUR_MATCH':
             bbox = colour_based.find_stop_sign(I) 
             
         if bbox is None:
