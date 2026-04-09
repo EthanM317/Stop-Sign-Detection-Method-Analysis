@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 import template_matching
 import colour_based
+import fourier_matching
 
 #Parses xml file
 def parse_xml(xml_path):
@@ -86,10 +87,11 @@ def detect_all(folder_path, flag):
         detected = None
         bbox = None
         if flag == 'TEMPLATE_MATCH':
-            bbox = template_matching.find_stop_sign(T, I)
-            
+            bbox = template_matching.find_stop_sign(T, I)   
         elif flag == 'COLOUR_MATCH':
             bbox = colour_based.find_stop_sign(I) 
+        elif flag == 'FFT':
+            bbox = fourier_matching.find_stop_sign(T, I)
             
         if bbox is None:
             detected = False
@@ -129,5 +131,7 @@ def detect_all(folder_path, flag):
     
     # Calculate accuracy
     if total_images > 0:
+        #much more negatives than positives in the test set, so we should
+        #account for that in the accuracy calculations
         accuracy = (true_positives + true_negatives) / total_images * 100
         print(f"Accuracy: {accuracy:.2f}%")
