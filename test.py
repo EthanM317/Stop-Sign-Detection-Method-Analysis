@@ -14,6 +14,7 @@ def main():
     parser.add_argument('--template-match', help='Detect image with template matching', action='store_true')
     parser.add_argument('--colour-match', help='Detect image with colour matching', action='store_true')
     parser.add_argument('--FFT', help='Detect image with fourier transform matching', action='store_true')
+    parser.add_argument('--YOLO', help='Detect image with pretrained YOLO model', action='store_true')
     
     args = parser.parse_args()
     
@@ -23,6 +24,8 @@ def main():
         util.detect_all('data/images','COLOUR_MATCH')
     elif args.FFT:
         util.detect_all('data/images', 'FFT')
+    elif args.YOLO:
+        util.detect_all('data/images', 'YOLO')
     
 if __name__ == '__main__':
     main()

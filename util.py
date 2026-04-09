@@ -1,6 +1,5 @@
 import cv2 as cv
 import numpy as np
-import argparse
 import os
 import xml.etree.ElementTree as ET
 import time
@@ -8,6 +7,7 @@ from pathlib import Path
 import template_matching
 import colour_based
 import fourier_matching
+import YOLO
 
 #Parses xml file
 def parse_xml(xml_path):
@@ -92,6 +92,8 @@ def detect_all(folder_path, flag):
             bbox = colour_based.find_stop_sign(I) 
         elif flag == 'FFT':
             bbox = fourier_matching.find_stop_sign(T, I)
+        elif flag == 'YOLO':
+            bbox = YOLO.find_stop_sign(I)
             
         if bbox is None:
             detected = False
