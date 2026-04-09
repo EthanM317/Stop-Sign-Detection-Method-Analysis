@@ -133,5 +133,7 @@ def detect_all(folder_path, flag):
     if total_images > 0:
         #much more negatives than positives in the test set, so we should
         #account for that in the accuracy calculations
-        accuracy = (true_positives + true_negatives) / total_images * 100
-        print(f"Accuracy: {accuracy:.2f}%")
+        accuracy_positives = (true_positives / (true_positives + false_negatives))
+        accuracy_negatives = (true_negatives / (true_negatives + false_negatives))
+        accuracy_balanced = (accuracy_positives + accuracy_negatives) / 2 * 100
+        print(f"Accuracy: {accuracy_balanced:.2f}%")

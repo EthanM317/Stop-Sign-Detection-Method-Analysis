@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from scipy.signal import fftconvolve
 
-def find_stop_sign(T, I, threshold=0.95):
+def find_stop_sign(T, I, threshold=0.75):
     #convert to grayscale
     T = cv.cvtColor(T, cv.COLOR_BGR2GRAY)
     I = cv.cvtColor(I, cv.COLOR_BGR2GRAY)
