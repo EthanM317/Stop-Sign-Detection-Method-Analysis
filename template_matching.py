@@ -132,7 +132,7 @@ def detect_image(image_path, template_path):
     
     I_rgb = cv.cvtColor(I, cv.COLOR_BGR2RGB)
     
-    bbox = find_stop_sign_template_matching(T, I)
+    bbox = find_stop_sign(T, I)
     
     # Check if stop sign was detected
     detected = not (bbox[0] == 0 and bbox[1] == 0 and bbox[2] == 1 and bbox[3] == 1)

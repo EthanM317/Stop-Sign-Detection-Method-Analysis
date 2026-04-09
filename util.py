@@ -8,6 +8,7 @@ import template_matching
 import colour_based
 import fourier_matching
 import YOLO
+import matplotlib.pyplot as plt
 
 #Parses xml file
 def parse_xml(xml_path):
@@ -48,7 +49,7 @@ def has_stop_sign(xml_path):
             return True
     return False
 
-def detect_all(folder_path, flag):
+def detect_all(folder_path, flag, threshold=0.8):
 
     template_path = 'template.png'
     T = cv.imread(template_path)
@@ -71,8 +72,8 @@ def detect_all(folder_path, flag):
     
     start_time = time.time()
     
-    print(f"{'Filename':<20}\t{'Stop Sign Detected':<20}\t{'Ground Truth':<15}")
-    print("-" * 60)
+    '''print(f"{'Filename':<20}\t{'Stop Sign Detected':<20}\t{'Ground Truth':<15}")
+    print("-" * 60)'''
     
     for png_file in png_files:
         total_images += 1
@@ -87,11 +88,11 @@ def detect_all(folder_path, flag):
         detected = None
         bbox = None
         if flag == 'TEMPLATE_MATCH':
-            bbox = template_matching.find_stop_sign(T, I)   
+            bbox = template_matching.find_stop_sign(T, I, threshold)   
         elif flag == 'COLOUR_MATCH':
-            bbox = colour_based.find_stop_sign(I) 
+            bbox = colour_based.find_stop_sign(I, threshold) 
         elif flag == 'FFT':
-            bbox = fourier_matching.find_stop_sign(T, I)
+            bbox = fourier_matching.find_stop_sign(T, I, threshold)
         elif flag == 'YOLO':
             bbox = YOLO.find_stop_sign(I)
             
@@ -114,13 +115,13 @@ def detect_all(folder_path, flag):
         
         detected_str = "Yes" if detected else "No"
         ground_truth_str = "Yes" if has_stop else "No"
-        print(f"{png_file.name:<20}\t{detected_str:<20}\t{ground_truth_str:<15}")
+        #print(f"{png_file.name:<20}\t{detected_str:<20}\t{ground_truth_str:<15}")
     
     end_time = time.time()
     total_time_ms = (end_time - start_time) * 1000
     
     # Print summary
-    print("\n" + "=" * 60)
+    '''print("\n" + "=" * 60)
     print("SUMMARY")
     print("=" * 60)
     print(f"Total images processed: {total_images}")
@@ -129,13 +130,62 @@ def detect_all(folder_path, flag):
     print(f"False positives: {false_positives}")
     print(f"False negatives: {false_negatives}")
     print(f"Total time taken: {total_time_ms:.2f} milliseconds")
-    print(f"Average time per image: {total_time_ms/total_images:.2f} milliseconds")
+    print(f"Average time per image: {total_time_ms/total_images:.2f} milliseconds")'''
     
     # Calculate accuracy
     if total_images > 0:
         #much more negatives than positives in the test set, so we should
         #account for that in the accuracy calculations
-        accuracy_positives = (true_positives / (true_positives + false_negatives))
-        accuracy_negatives = (true_negatives / (true_negatives + false_negatives))
+        if true_positives + false_negatives > 0:
+            accuracy_positives = true_positives / (true_positives + false_negatives)
+        else:
+            accuracy_positives = 0.0
+
+        if true_negatives + false_positives > 0:
+            accuracy_negatives = true_negatives / (true_negatives + false_positives)
+        else:
+            accuracy_negatives = 0.0
+
         accuracy_balanced = (accuracy_positives + accuracy_negatives) / 2 * 100
+        accuracy_positives *= 100
+        accuracy_negatives *= 100
+
         print(f"Accuracy: {accuracy_balanced:.2f}%")
+        return accuracy_balanced, accuracy_positives, accuracy_negatives
+    return None
+
+def test_threshold(folder_path, flag):
+    thresholds = np.linspace(0.0, 1.0, 21)
+    thresholds = np.round(thresholds, 2)
+    balanced_accuracy = []
+    positive_accuracy = []
+    negative_accuracy = []
+
+    for threshold in thresholds:
+        print(f"Current threshold: {threshold} / 1.0...")
+        accuracy = detect_all(folder_path, flag, threshold)
+        if accuracy is None:
+            balanced_accuracy.append(0.0)
+            positive_accuracy.append(0.0)
+            negative_accuracy.append(0.0)
+        else:
+            balanced, positive, negative = accuracy
+            balanced_accuracy.append(balanced)
+            positive_accuracy.append(positive)
+            negative_accuracy.append(negative)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(thresholds, balanced_accuracy, marker='o', linestyle='-', label='Total Balanced Accuracy')
+    plt.plot(thresholds, positive_accuracy, marker='s', linestyle='--', label='Positive Accuracy')
+    plt.plot(thresholds, negative_accuracy, marker='^', linestyle='-.', label='Negative Accuracy')
+    plt.title('FFT: Threshold vs Accuracy')
+    plt.xlabel('Threshold')
+    plt.ylabel('Accuracy (%)')
+    plt.grid(True)
+    plt.xticks(thresholds)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    
+
+    

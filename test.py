@@ -7,21 +7,29 @@ import time
 from pathlib import Path
 import util
 import template_matching
+import fourier_matching
 
         
 def main():
     parser = argparse.ArgumentParser(description='Stop Sign Detection System')
-    parser.add_argument('--template-match', help='Detect image with template matching', action='store_true')
-    parser.add_argument('--colour-match', help='Detect image with colour matching', action='store_true')
-    parser.add_argument('--FFT', help='Detect image with fourier transform matching', action='store_true')
-    parser.add_argument('--YOLO', help='Detect image with pretrained YOLO model', action='store_true')
+    parser.add_argument('-template-match', help='Detect image with template matching', action='store_true')
+    parser.add_argument('-colour-match', help='Detect image with colour matching', action='store_true')
+    parser.add_argument('-FFT', help='Detect image with fourier transform matching', action='store_true')
+    parser.add_argument('-test-threshold', help='Run threshold test', action='store_true')
+    parser.add_argument('-YOLO', help='Detect image with pretrained YOLO model', action='store_true')
     
     args = parser.parse_args()
     
-    if args.template_match:
+    if args.template_match and args.test_threshold:
+        util.test_threshold('data/images', 'TEMPLATE_MATCH')
+    elif args.template_match:
         util.detect_all('data/images','TEMPLATE_MATCH')
+    elif args.colour_match and args.test_threshold:
+        util.test_threshold('data/images', 'COLOUR_MATCH')
     elif args.colour_match:
         util.detect_all('data/images','COLOUR_MATCH')
+    elif args.FFT and args.test_threshold:
+        util.test_threshold('data/images', 'FFT')
     elif args.FFT:
         util.detect_all('data/images', 'FFT')
     elif args.YOLO:

@@ -6,11 +6,16 @@ from pathlib import Path
 import time
 
 
-def find_stop_sign(image):
+
+def find_stop_sign(image, threshold=0.8):
     """
     Given an image I, returns the bounding box 
     for the detected stop sign using colour detection with image pyramids.
+    In this case, the threshold value is used to return a bbox if
+    the threshold * 100% of the pixels in the region are red
     """
+    
+    
     #hsv allows us to ignore saturation & brightness so we can focus on hue
     I = cv.cvtColor(image, cv.COLOR_BGR2HSV)
     
@@ -42,8 +47,13 @@ def find_stop_sign(image):
     
     for contour in contours:
         area = cv.contourArea(contour)
-        #ignore small noise
+        #ignore small noise (> 25x25 region)
         if area > 500:
             x,y,w,h = cv.boundingRect(contour)
-            return np.array([y, x, h, w]).astype(int)
+            region = mask[y:y+h, x:x+w]
+            red_pixels = cv.countNonZero(region)
+            red_ratio = red_pixels / area
+            if red_ratio >= threshold:
+                return np.array([y, x, h, w]).astype(int)
+    return None
     
